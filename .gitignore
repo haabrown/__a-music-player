@@ -2,6 +2,10 @@
 __pycache__/
 *.py[cod]
 
+# Misc. Py Outputs
+*.py~
+*.pyc
+
 # C extensions
 *.so
 
