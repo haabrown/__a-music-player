@@ -6,6 +6,11 @@ import wx.lib.buttons as buttons
 dir_name=os.path.dirname(os.path.abspath(__file__))
 image_dir=os.path.join(dir_name,'data')
 
+def to_time(seconds):
+    m, s = divmod(seconds, 60)
+    h, m = divmod(m, 60)
+    return "%d:%02d:%02d" % (h, m, s)
+
 class Media_Panel(wx.Panel):
     def __init__(self,parent):
         wx.Panel.__init__(self,parent=parent)
@@ -13,6 +18,8 @@ class Media_Panel(wx.Panel):
         self.frame=parent
         self.current_volume=50
         self.vol_label=wx.StaticText(self,wx.ID_ANY,str(self.current_volume)+"  ")
+        self.cur_label=wx.StaticText(self,wx.ID_ANY,"")
+        self.max_label=wx.StaticText(self,wx.ID_ANY,"")
         self.mode="Music"
         self.create_menu()
         self.layout_controls()
@@ -30,8 +37,9 @@ class Media_Panel(wx.Panel):
         except NotImplementedError:
             self.Destroy()
        	    raise
+        self.media_player.SetVolume(self.current_volume/float(100))
         self.playback_slider=wx.Slider(self,size=wx.DefaultSize)
-        # Slider bind goes here
+        self.Bind(wx.EVT_SLIDER,self.on_seek,self.playback_slider)
         self.volume_control=wx.Slider(self,size=wx.DefaultSize)
         self.volume_control.SetRange(0,100)
         self.volume_control.SetValue(self.current_volume)
@@ -46,6 +54,10 @@ class Media_Panel(wx.Panel):
         sizer.Add(wx.Button(self,-1,'Text'),0,wx.EXPAND|wx.ALL)
         hsizer=wx.BoxSizer(wx.HORIZONTAL)
         hsizer.Add(self.playback_slider,1,wx.EXPAND|wx.ALL)
+        timesizer=wx.BoxSizer(wx.VERTICAL)
+        timesizer.Add(self.cur_label,0)
+        timesizer.Add(self.max_label,0)
+        hsizer.Add(timesizer,0,wx.EXPAND|wx.ALL)
         sizer.Add(hsizer,0,wx.EXPAND|wx.ALL)
 
         self.SetSizer(sizer)
@@ -94,7 +106,8 @@ class Media_Panel(wx.Panel):
             self.media_player.SetInitialSize()
             self.playback_slider.SetRange(0,self.media_player.Length())
             #self.playPauseBtn.Enable(True) 
-        self.media_player.Play()
+            self.max_label.SetLabel(" "+str(to_time((self.media_player.Length()/float(1000))))+" ")
+            self.media_player.Play()
 
     def on_browse(self,event):
         wildcard="MP3 (*.mp3)|*.mp3|"   \
@@ -111,11 +124,13 @@ class Media_Panel(wx.Panel):
             self.load_music(path)
         dlg.Destroy()
 
+    def on_seek(self,e):
+        self.media_player.Seek(self.playback_slider.GetValue())
+
     def on_set_volume(self,e):
         self.current_volume=self.volume_control.GetValue()
         self.vol_label.SetLabel(str(self.current_volume)+"  ")
         self.media_player.SetVolume(self.current_volume/float(100))
-        print self.media_player.GetVolume()
 
     def on_exit(self,e):
         self.frame.Close(True)
@@ -134,6 +149,7 @@ class Media_Panel(wx.Panel):
 
     def on_timer(self,event):
         offset=self.media_player.Tell()
+        self.cur_label.SetLabel(" "+str(to_time((offset/float(1000))))+" ")
         self.playback_slider.SetValue(offset)
 
 class Media_Frame(wx.Frame):
