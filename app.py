@@ -110,9 +110,7 @@ class Media_Panel(wx.Panel):
             self.media_player.Play()
 
     def on_browse(self,event):
-        wildcard="MP3 (*.mp3)|*.mp3|"   \
-                 "WAV (*.wav)|*.wav|"    \
-                 "OGG (*.ogg)|*.ogg"
+        wildcard="Music File (*.mp3; *.ogg; *.wav)|*.mp3;*.ogg;*.wav"
         dlg=wx.FileDialog(self,message="Choose a file",
             defaultDir=self.current_folder,
             defaultFile='',
