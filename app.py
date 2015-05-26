@@ -21,6 +21,13 @@ class Media_Panel(wx.Panel):
         self.cur_label=wx.StaticText(self,wx.ID_ANY,"")
         self.max_label=wx.StaticText(self,wx.ID_ANY,"")
         self.mode="Music"
+        self.playing=False
+
+        self.play=wx.Bitmap("data/play.png",wx.BITMAP_TYPE_ANY)
+        self.pause=wx.Bitmap("data/pause.png",wx.BITMAP_TYPE_ANY)
+        self.repeatoff=wx.Bitmap("data/repeat.png",wx.BITMAP_TYPE_ANY)
+        self.repeaton=wx.Bitmap("data/repeaton.png",wx.BITMAP_TYPE_ANY)
+
         self.create_menu()
         self.layout_controls()
 
@@ -30,6 +37,9 @@ class Media_Panel(wx.Panel):
         self.timer=wx.Timer(self)
         self.Bind(wx.EVT_TIMER,self.on_timer)
         self.timer.Start(100)
+
+        self.Bind(wx.media.EVT_MEDIA_FINISHED,self.ending)
+        self.Bind(wx.media.EVT_MEDIA_STATECHANGED,self.playing_update)
 
     def layout_controls(self):
         try:
@@ -48,35 +58,27 @@ class Media_Panel(wx.Panel):
         sizer.Add((0,0),1)
         volsizer=wx.BoxSizer(wx.HORIZONTAL)
         volsizer.Add(wx.StaticText(self,wx.ID_ANY,"Volume: "),0,wx.ALIGN_CENTER_VERTICAL)
-        volsizer.Add(self.vol_label,0,wx.ALIGN_CENTER)  # Requires an update on volume change
+        volsizer.Add(self.vol_label,0,wx.ALIGN_CENTER)
         volsizer.Add(self.volume_control,1,wx.ALIGN_CENTER_VERTICAL)
-        sizer.Add(volsizer,0,wx.EXPAND|wx.ALL)
-        sizer.Add(wx.Button(self,-1,'Text'),0,wx.EXPAND|wx.ALL)
         hsizer=wx.BoxSizer(wx.HORIZONTAL)
+        self.playbutton=wx.BitmapButton(self,bitmap=self.pause,size=(self.play.GetWidth(),self.play.GetHeight()))
+        self.playbutton.Enable(False)
+        self.repeatbutton=wx.BitmapButton(self,bitmap=self.repeatoff,size=(self.repeatoff.GetWidth(),self.repeatoff.GetHeight()))
+        self.playbutton.Bind(wx.EVT_BUTTON,self.on_play)
+        # repeat bind goes here
+        hsizer.Add(self.playbutton,0)
+        hsizer.Add(self.repeatbutton,0)
         hsizer.Add(self.playback_slider,1,wx.EXPAND|wx.ALL)
         timesizer=wx.BoxSizer(wx.VERTICAL)
         timesizer.Add(self.cur_label,0)
         timesizer.Add(self.max_label,0)
-        hsizer.Add(timesizer,0,wx.EXPAND|wx.ALL)
+        hsizer.Add(timesizer,0,wx.ALIGN_CENTER_VERTICAL)
         sizer.Add(hsizer,0,wx.EXPAND|wx.ALL)
+        sizer.Add(wx.Button(self,-1,'Text'),0,wx.EXPAND|wx.ALL)
+        sizer.Add(volsizer,0,wx.EXPAND|wx.ALL)
 
         self.SetSizer(sizer)
         self.Layout()
-
-    def build_audio_bar(self):
-        audio_bar_sizer=wx.BoxSizer(wx.HORIZONTAL)
-        # Missing everything really
-        return audio_bar_sizer
-
-	def build_button(self,btn_dict,sizer):
-		icn=btn_dict['icon']
-		handler=btn_dict['handler']
-
-		img=wx.Bitmap(os.path.join(image_dir,icn))
-		btn=buttons.GenBitmapButton(self,bitmap=img,name=btn_dict['name'])
-		btn.SetInitialSize()
-		btn.bind(wx.EVT_BUTTON,handler)
-		sizer.Add(btn,0,wx.LEFT,3)
 
     def create_menu(self):
         menubar=wx.MenuBar()
@@ -105,7 +107,7 @@ class Media_Panel(wx.Panel):
         else:
             self.media_player.SetInitialSize()
             self.playback_slider.SetRange(0,self.media_player.Length())
-            #self.playPauseBtn.Enable(True) 
+            self.playbutton.Enable(True) 
             self.max_label.SetLabel(" "+str(to_time((self.media_player.Length()/float(1000))))+" ")
             self.media_player.Play()
 
@@ -121,6 +123,29 @@ class Media_Panel(wx.Panel):
             self.current_folder=os.path.dirname(path)
             self.load_music(path)
         dlg.Destroy()
+
+    def on_play(self,e):
+        if self.playing:
+            self.media_player.Pause()
+            self.playbutton.SetBitmapLabel(bitmap=self.play)
+            return
+        if not self.media_player.Play():
+            wx.MessageBox("Unable to play %s." % music_file,
+                "ERROR",
+                wx.ICON_ERROR | wx.OK)
+        else:
+            self.media_player.Play()
+            self.playbutton.SetBitmapLabel(bitmap=self.pause)
+
+    def ending(self,e):
+        pass
+
+    def playing_update(self,e):
+        if self.media_player.GetState()==2:
+            # The enumerate is 0 = stopped, 1 = paused, 2 = playing
+            self.playing=True
+        else:
+            self.playing=False
 
     def on_seek(self,e):
         self.media_player.Seek(self.playback_slider.GetValue())
