@@ -1,9 +1,11 @@
+#!/usr/bin/python
 import os
+import sys
 import wx
 import wx.media
 import wx.lib.buttons as buttons
 
-dir_name=os.path.dirname(os.path.abspath(__file__))
+dir_name=os.path.dirname(os.path.abspath(sys.argv[0]))
 image_dir=os.path.join(dir_name,'data')
 
 def to_time(seconds):
@@ -24,10 +26,10 @@ class Media_Panel(wx.Panel):
         self.playing=False
         self.repeat=False
 
-        self.play=wx.Bitmap("data/play.png",wx.BITMAP_TYPE_ANY)
-        self.pause=wx.Bitmap("data/pause.png",wx.BITMAP_TYPE_ANY)
-        self.repeatoff=wx.Bitmap("data/repeat.png",wx.BITMAP_TYPE_ANY)
-        self.repeaton=wx.Bitmap("data/repeaton.png",wx.BITMAP_TYPE_ANY)
+        self.play=wx.Bitmap(image_dir+"/play.png",wx.BITMAP_TYPE_ANY)
+        self.pause=wx.Bitmap(image_dir+"/pause.png",wx.BITMAP_TYPE_ANY)
+        self.repeatoff=wx.Bitmap(image_dir+"/repeat.png",wx.BITMAP_TYPE_ANY)
+        self.repeaton=wx.Bitmap(image_dir+"/repeaton.png",wx.BITMAP_TYPE_ANY)
 
         self.create_menu()
         self.layout_controls()
