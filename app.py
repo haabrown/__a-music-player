@@ -22,6 +22,7 @@ class Media_Panel(wx.Panel):
         self.max_label=wx.StaticText(self,wx.ID_ANY,"")
         self.mode="Music"
         self.playing=False
+        self.repeat=False
 
         self.play=wx.Bitmap("data/play.png",wx.BITMAP_TYPE_ANY)
         self.pause=wx.Bitmap("data/pause.png",wx.BITMAP_TYPE_ANY)
@@ -65,7 +66,7 @@ class Media_Panel(wx.Panel):
         self.playbutton.Enable(False)
         self.repeatbutton=wx.BitmapButton(self,bitmap=self.repeatoff,size=(self.repeatoff.GetWidth(),self.repeatoff.GetHeight()))
         self.playbutton.Bind(wx.EVT_BUTTON,self.on_play)
-        # repeat bind goes here
+        self.repeatbutton.Bind(wx.EVT_BUTTON,self.on_repeat)
         hsizer.Add(self.playbutton,0)
         hsizer.Add(self.repeatbutton,0)
         hsizer.Add(self.playback_slider,1,wx.EXPAND|wx.ALL)
@@ -127,7 +128,6 @@ class Media_Panel(wx.Panel):
     def on_play(self,e):
         if self.playing:
             self.media_player.Pause()
-            self.playbutton.SetBitmapLabel(bitmap=self.play)
             return
         if not self.media_player.Play():
             wx.MessageBox("Unable to play %s." % music_file,
@@ -135,17 +135,27 @@ class Media_Panel(wx.Panel):
                 wx.ICON_ERROR | wx.OK)
         else:
             self.media_player.Play()
-            self.playbutton.SetBitmapLabel(bitmap=self.pause)
+
+    def on_repeat(self,e):
+        if self.repeat==False:
+            self.repeat=True
+            self.repeatbutton.SetBitmapLabel(bitmap=self.repeaton)
+        else:
+            self.repeat=False
+            self.repeatbutton.SetBitmapLabel(bitmap=self.repeatoff)
 
     def ending(self,e):
-        pass
+        if self.repeat==True:
+            self.media_player.Play()
 
     def playing_update(self,e):
         if self.media_player.GetState()==2:
             # The enumerate is 0 = stopped, 1 = paused, 2 = playing
             self.playing=True
+            self.playbutton.SetBitmapLabel(bitmap=self.pause)
         else:
             self.playing=False
+            self.playbutton.SetBitmapLabel(bitmap=self.play)
 
     def on_seek(self,e):
         self.media_player.Seek(self.playback_slider.GetValue())
